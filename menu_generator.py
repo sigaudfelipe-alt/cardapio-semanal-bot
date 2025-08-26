@@ -101,12 +101,14 @@ def compose_email(menu_lines: list) -> tuple:
 
 def send_email(subject: str, body: str) -> None:
     """Envia o e‑mail com o cardápio usando credenciais SMTP fornecidas via variáveis de ambiente."""
-    smtp_host = os.getenv("SMTP_HOST")
+    ssmtp_host = os.getenv("SMTP_HOST")
     smtp_port = int(os.getenv("SMTP_PORT", "587"))
     smtp_user = os.getenv("SMTP_USER")
     smtp_password = os.getenv("SMTP_PASSWORD")
     sender = os.getenv("SENDER_EMAIL", smtp_user)
     recipient = os.getenv("RECIPIENT_EMAIL")
+    # Determine if SSL should be used based on port or environment variable
+    use_ssl_env = os.getenv("SMTP_USE_SSL", "").lower() in {"1", "true", "yes"}
     if not smtp_host or not smtp_user or not smtp_password or not recipient:
         raise ValueError("Credenciais SMTP ou destinatário não configurados.")
 
@@ -116,11 +118,23 @@ def send_email(subject: str, body: str) -> None:
     msg["Subject"] = subject
     msg.set_content(body)
 
-    # Conectar ao servidor SMTP e enviar a mensagem
-    with smtplib.SMTP(smtp_host, smtp_port) as server:
-        server.starttls()
-        server.login(smtp_user, smtp_password)
-        server.send_message(msg)
+    try:
+        if smtp_port == 465 or use_ssl_env:
+            # Connect using SSL (porta 465)
+            with smtplib.SMTP_SSL(smtp_host, smtp_port) as server:
+                server.login(smtp_user, smtp_password)
+                server.send_message(msg)
+        else:
+            # Connect using STARTTLS (porta 587 ou outras)
+            with smtplib.SMTP(smtp_host, smtp_port) as server:
+                server.ehlo()
+                server.starttls()
+                server.ehlo()
+                server.login(smtp_user, smtp_password)
+                server.send_message(msg)
+    except smtplib.SMTPAuthenticationError as e:
+        raise RuntimeError("Falha de autenticação SMTP. Verifique usuário, senha ou senha de aplicativo.") from except smtplib.SMTPAuthenticationError as e:
+        raise RuntimeError("Falha de autenticação SMTP. Verifique usuário, senha ou senha de aplicativo.") from e     server.send_message(msg)
 
 def main() -> None:
     """Função principal para gerar o cardápio e enviar o e‑mail."""
