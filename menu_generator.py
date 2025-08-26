@@ -132,9 +132,9 @@ def send_email(subject: str, body: str) -> None:
                 server.ehlo()
                 server.login(smtp_user, smtp_password)
                 server.send_message(msg)
-    except smtplib.SMTPAuthenticationError as e:
-        raise RuntimeError("Falha de autenticação SMTP. Verifique usuário, senha ou senha de aplicativo.") from except smtplib.SMTPAuthenticationError as e:
-        raise RuntimeError("Falha de autenticação SMTP. Verifique usuário, senha ou senha de aplicativo.") from e     server.send_message(msg)
+      except smtplib.SMTPAuthenticationError as e:
+             raise RuntimeError("Falha de autenticação SMTP. Verifique usuário, senha ou senha de aplicativo.") from e
+
 
 def main() -> None:
     """Função principal para gerar o cardápio e enviar o e‑mail."""
